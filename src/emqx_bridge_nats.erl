@@ -26,7 +26,6 @@
 %% Client Lifecircle Hooks
 -export([on_client_connected/3
         , on_client_disconnected/4
-%        , on_client_authenticate/3
         ]).
 
 %% Session Lifecircle Hooks
@@ -75,13 +74,6 @@ on_client_disconnected(ClientInfo = #{clientid := ClientId}, ReasonCode, ConnInf
     Event = [{action, <<"disconnected">>}, {clientId, ClientId}, {reasonCode, ReasonCode}],
     Topic = <<"iotpaas.devices.disconnected">>,
     publish_to_nats(Event, Topic).
-
-%on_client_authenticate(_ClientInfo = #{clientid := ClientId}, Result, _Env) ->
-%    io:format("Client(~s) authenticate, Result:~n~p~n", [ClientId, Result]),
-%    Event = [{action, <<"disconnected">>}, {clientId, ClientId}, {result, Result}],
-%    Topic = <<"iotpaas.devices.authenticate">>,
-%    publish_to_nats(Event, Topic),
-%    {ok, Result}.
 
 %%--------------------------------------------------------------------
 %% Session Lifecircle Hooks
@@ -143,11 +135,13 @@ teacup_init(_Env) ->
     io:format("Init Connection~n"),
     {ok, _} = application:ensure_all_started(teacup_nats),
     NatsAddress = application:get_env(emqx_bridge_nats, address, "127.0.0.1"),
-    io:format("Init Connection: NatsAddress ~s~n", [NatsAddress]),
+    io:format("Init Connection: NatsAddress ~p~n", [NatsAddress]),
     NatsPort = application:get_env(emqx_bridge_nats, port, 4222),
+    io:format("Init Connection: NatsPort ~p~n", [NatsPort]),
     PoolOpts = [{address, NatsAddress}
                , {port, NatsPort}
     ],
+    io:format("Init Connection: NatsAddress ~p~n", [proplists:get_value(address,  PoolOpts))]),
     {ok, Conn} = nats:connect(list_to_binary(proplists:get_value(address,  PoolOpts)), proplists:get_value(port,  PoolOpts)),
     {ok, Conn}.
 
@@ -175,7 +169,6 @@ format_payload(Message, Action) ->
 unload() ->
     emqx:unhook('client.connected',    {?MODULE, on_client_connected}),
     emqx:unhook('client.disconnected', {?MODULE, on_client_disconnected}),
-%    emqx:unhook('client.authenticate', {?MODULE, on_client_authenticate}),
     emqx:unhook('session.subscribed',  {?MODULE, on_session_subscribed}),
     emqx:unhook('session.unsubscribed',{?MODULE, on_session_unsubscribed}),
     emqx:unhook('message.publish',     {?MODULE, on_message_publish}),

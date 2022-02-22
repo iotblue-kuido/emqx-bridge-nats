@@ -144,7 +144,6 @@ teacup_init(_Env) ->
     NatsAddress = application:get_env(emqx_bridge_nats, address, "127.0.0.1"),
     io:format("Init Connection: NatsAddress ~s~n", [NatsAddress]),
     NatsPort = application:get_env(emqx_bridge_nats, port, 4222),
-    io:format("Init Connection: NatsPort ~s~n", [NatsPort]),
     PoolOpts = [
                     {pool_size, 10},
                     {pool_type, round_robin},
@@ -152,17 +151,16 @@ teacup_init(_Env) ->
                     {address, NatsAddress},
                     {port, NatsPort}
                 ],
-    io:format("Message delivered to client(~s)~n", [NatsAddress]),
     case nats:connect(list_to_binary(proplists:get_value(address,  PoolOpts)), proplists:get_value(port,  PoolOpts)) of
         {ok, Conn} ->
             {ok, #state{conn = Conn}};
         {error, Reason} ->
             io:format("Can't connect to NATS server: ~p~n", [Reason]),
             {error, Reason}
-    end,
-    {ok, #state{conn = Conn}}.
+    end.
 
-publish_to_nats(Message, Topic, #state{conn = Conn} = State ) ->
+publish_to_nats(Message, Topic ) ->
+    Conn = #state.conn,
     Payload = jsx:encode(Message),
     ok = nats:pub(Conn, Topic, #{payload => Payload}).
 

@@ -14,9 +14,11 @@
 %% limitations under the License.
 %%--------------------------------------------------------------------
 
--module(emqx-bridge_nats_app).
+-module(emqx_bridge_nats_app).
 
 -behaviour(application).
+
+-include("emqx_bridge_nats.hrl").
 
 -emqx_plugin(?MODULE).
 

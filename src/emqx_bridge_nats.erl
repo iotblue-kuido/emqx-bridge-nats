@@ -17,6 +17,7 @@
 -module(emqx_bridge_nats).
 
 -include("emqx.hrl").
+-include("emqx_bridge_nats.hrl").
 
 -export([ load/1
         , unload/0
@@ -40,9 +41,10 @@
         , on_message_dropped/4
         ]).
 
+-record(state, {conn}).
+
 %% Called when the plugin application start
 load(Env) ->
-    {ok, _} = application:ensure_all_started(teacup_nats),
     teacup_init(Env),
     emqx:hook('client.connected',    {?MODULE, on_client_connected, [Env]}),
     emqx:hook('client.disconnected', {?MODULE, on_client_disconnected, [Env]}),
@@ -77,7 +79,7 @@ on_client_authenticate(_ClientInfo = #{clientid := ClientId}, Result, _Env) ->
     io:format("Client(~s) authenticate, Result:~n~p~n", [ClientId, Result]),
     Event = [{action, <<"disconnected">>}, {clientId, ClientId}, {result, Result}],
     Topic = <<"iotpaas.devices.authenticate">>,
-    publish_to_nats(Event, Topic)
+    publish_to_nats(Event, Topic),
     {ok, Result}.
 
 %%--------------------------------------------------------------------
@@ -137,29 +139,36 @@ on_message_acked(_ClientInfo = #{clientid := ClientId}, Message, _Env) ->
 
 
 teacup_init(_Env) ->
-    {ok, Bridges} = application:get_env(emqx_bridge_nats, bridges),
-    NatsAddress = proplists:get_value(address, Bridges),
-    NatsPort = proplists:get_value(port, Bridges),
-    NatsPayloadTopic = proplists:get_value(payloadtopic, Bridges),
-    NatsEventTopic = proplists:get_value(eventtopic, Bridges),
-    ets:new(app_data, [named_table, protected, set, {keypos, 1}]),
-    ets:insert(app_data, {nats_payload_topic, NatsPayloadTopic}),
-    ets:insert(app_data, {nats_event_topic, NatsEventTopic}),
+    io:format("Init Connection~n"),
+    {ok, _} = application:ensure_all_started(teacup_nats),
+    NatsAddress = application:get_env(emqx_bridge_nats, address, "127.0.0.1"),
+    io:format("Init Connection: NatsAddress ~s~n", [NatsAddress]),
+    NatsPort = application:get_env(emqx_bridge_nats, port, 4222),
+    io:format("Init Connection: NatsPort ~s~n", [NatsPort]),
+    PoolOpts = [
+                    {pool_size, 10},
+                    {pool_type, round_robin},
+                    {auto_reconnect, 3},
+                    {address, NatsAddress},
+                    {port, NatsPort}
+                ],
     io:format("Message delivered to client(~s)~n", [NatsAddress]),
-    {ok, Conn} = nats:connect(list_to_binary(NatsAddress), NatsPort),
-    ets:insert(app_data, {nats_conn, Conn}),
-    {ok, Conn}.
+    case nats:connect(list_to_binary(proplists:get_value(address,  PoolOpts)), proplists:get_value(port,  PoolOpts)) of
+        {ok, Conn} ->
+            {ok, #state{conn = Conn}};
+        {error, Reason} ->
+            io:format("Can't connect to NATS server: ~p~n", [Reason]),
+            {error, Reason}
+    end,
+    {ok, #state{conn = Conn}}.
 
-publish_to_nats(Message, Topic) ->
-    [{_, Conn}] = ets:lookup(app_data, nats_conn),
+publish_to_nats(Message, Topic, #state{conn = Conn} = State ) ->
     Payload = jsx:encode(Message),
     ok = nats:pub(Conn, Topic, #{payload => Payload}).
-%    emqx_bridge_nats_conn:publish(emqx_json:encode(Message), Topic).
 
 format_payload(Message, Action) ->
     <<T1:64, T2:48, T3:16>> = Message#message.id,
     Payload = [
-        {time, erlang:system_time(Message#message.timestamp)}
         {id, T1 + T2 + T3},
         {action, Action},
         {qos, Message#message.qos},

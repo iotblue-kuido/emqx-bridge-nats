@@ -45,7 +45,9 @@
 
 %% Called when the plugin application start
 load(Env) ->
-    teacup_init(Env),
+    {ok, Conn} = teacup_init(Env),
+    #state{conn = Conn},
+    io:format("Conn: ~p~n", [#state.conn]),
     emqx:hook('client.connected',    {?MODULE, on_client_connected, [Env]}),
     emqx:hook('client.disconnected', {?MODULE, on_client_disconnected, [Env]}),
 %    emqx:hook('client.authenticate', {?MODULE, on_client_authenticate, [Env]}),
@@ -144,24 +146,17 @@ teacup_init(_Env) ->
     NatsAddress = application:get_env(emqx_bridge_nats, address, "127.0.0.1"),
     io:format("Init Connection: NatsAddress ~s~n", [NatsAddress]),
     NatsPort = application:get_env(emqx_bridge_nats, port, 4222),
-    PoolOpts = [
-                    {pool_size, 10},
-                    {pool_type, round_robin},
-                    {auto_reconnect, 3},
-                    {address, NatsAddress},
-                    {port, NatsPort}
-                ],
-    case nats:connect(list_to_binary(proplists:get_value(address,  PoolOpts)), proplists:get_value(port,  PoolOpts)) of
-        {ok, Conn} ->
-            {ok, #state{conn = Conn}};
-        {error, Reason} ->
-            io:format("Can't connect to NATS server: ~p~n", [Reason]),
-            {error, Reason}
-    end.
+    PoolOpts = [{address, NatsAddress}
+               , {port, NatsPort}
+    ],
+    {ok, Conn} = nats:connect(list_to_binary(proplists:get_value(address,  PoolOpts)), proplists:get_value(port,  PoolOpts)),
+    {ok, Conn}.
 
 publish_to_nats(Message, Topic ) ->
     Conn = #state.conn,
+    io:format("Conn: ~p~n", [Conn]),
     Payload = emqx_json:encode(Message),
+    io:format("Payload: ~p~n", [Payload]),
     ok = nats:pub(Conn, Topic, #{payload => Payload}).
 
 format_payload(Message, Action) ->

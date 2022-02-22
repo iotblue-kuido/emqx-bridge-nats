@@ -14,21 +14,10 @@
 %% limitations under the License.
 %%--------------------------------------------------------------------
 
--module(emqx_plugin_template_app).
+-module(emqx_bridge_nats_SUITE).
 
--behaviour(application).
+-compile(export_all).
 
--emqx_plugin(?MODULE).
+all() -> [].
 
--export([ start/2
-        , stop/1
-        ]).
-
-start(_StartType, _StartArgs) ->
-    {ok, Sup} = emqx_plugin_template_sup:start_link(),
-    emqx_plugin_template:load(application:get_all_env()),
-    {ok, Sup}.
-
-stop(_State) ->
-    emqx_plugin_template:unload().
-
+groups() -> [].

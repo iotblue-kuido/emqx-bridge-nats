@@ -1,35 +1,73 @@
-# emqx-plugin-template
+# emqx_bridge_nats: Plugin for Nats
 
-This is a template plugin for EMQ X version >= 4.3.
+## Introduction
+This plugin is to bridge data to NATS message bus.
 
-For development guide, see https://github.com/emqx/emqx/blob/main-v4.4/lib-extra/README.md
+## NATS
+NATS is an open source, lightweight, high-performance distributed messaging middleware that implements high scalability and an elegant Publish/Subscribe model and is developed in Golang.
+NATS messaging supports the exchange of data segmented into messages between computer applications and services. These messages are resolved by topic and do not depend on network location. This provides an abstraction layer between the application or service and the underlying physical network. The data is encoded and formed into a message and sent by the publisher. The message is received, decoded and processed by one or more subscribers.
+### 测试环境
+```sh
+docker run --name nats --rm -p 4222:4222 -p 8222:8222 nats
+``` 
 
-Plugin Config
--------------
+## Configuration
+```ini
+##====================================================================
+## Configuration for EMQ X NATS Broker Bridge
+##====================================================================
 
-Each plugin should have a 'etc/{plugin_name}.conf|config' file to store application config.
+## Bridge address: node address for bridge.
+##
+## Value: String
+## Example: 127.0.0.1
+bridge.nats.address = 127.0.0.1
 
-Authentication and ACL
-----------------------
+## Bridge Port: node port for bridge.
+##
+## Value: Integer
+## Value: Port
+bridge.nats.port = 4222
 
 ```
-emqx:hook('client.authenticate', fun ?MODULE:on_client_authenticate/3, [Env]).
-emqx:hook('client.check_acl', fun ?MODULE:on_client_check_acl/5, [Env]).
+## Subscription test
+Let's write a simple golang client to implement subscription:
+
+```go
+package main
+
+import (
+	"fmt"
+
+	"github.com/nats-io/nats.go"
+)
+
+func main() {
+	nc, err := nats.Connect("nats://127.0.0.1:4222")
+	if err != nil {
+		fmt.Println(err.Error())
+		return
+	}
+	nc.Subscribe("iotpaas.devices.message", func(m *nats.Msg) {
+		fmt.Printf("message: %s\n", string(m.Data))
+	})
+	nc.Subscribe("iotpaas.devices.connected", func(m *nats.Msg) {
+		fmt.Printf("connect: %s\n", string(m.Data))
+	})
+	nc.Subscribe("iotpaas.devices.disconnected", func(m *nats.Msg) {
+		fmt.Printf("disconnect: %s\n", string(m.Data))
+	})
+
+	for {
+	}
+
+}
+
 ```
 
-Plugin and Hooks
------------------
-
-[Plugin Development](https://docs.emqx.io/en/broker/v4.3/advanced/plugins.html#plugin-development)
-
-[EMQ X Hook points](https://docs.emqx.io/en/broker/v4.3/advanced/hooks.html)
-
-License
--------
-
-Apache License Version 2.0
-
-Author
-------
-
-EMQ X Team.
+## Output
+```
+disconnect: {"action":"disconnected","clientid":"mqttjs_661dd06d29","reasonCode":"remote"}
+connect: {"action":"connected","clientid":"mqttjs_661dd06d29"}
+message: {"id":1902572155295492,"qos":0,"clientid":"mqttjs_661dd06d29","topic":"testtopic","payload":"{ \"msg\": \"Hello, World!\" }"}
+```

@@ -14,17 +14,21 @@
 %% limitations under the License.
 %%--------------------------------------------------------------------
 
--module(emqx_plugin_template_sup).
+-module(emqx-bridge_nats_app).
 
--behaviour(supervisor).
+-behaviour(application).
 
--export([start_link/0]).
+-emqx_plugin(?MODULE).
 
--export([init/1]).
+-export([ start/2
+        , stop/1
+        ]).
 
-start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+start(_StartType, _StartArgs) ->
+    {ok, Sup} = emqx_bridge_nats_sup:start_link(),
+    emqx_bridge_nats:load(application:get_all_env()),
+    {ok, Sup}.
 
-init([]) ->
-    {ok, { {one_for_all, 0, 1}, []} }.
+stop(_State) ->
+    emqx_plugin_template:unload().
 

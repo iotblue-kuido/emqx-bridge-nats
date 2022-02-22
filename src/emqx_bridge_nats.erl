@@ -160,9 +160,9 @@ teacup_init(_Env) ->
     end.
 
 publish_to_nats(Message, Topic ) ->
-    Conn = #state.conn,
-    Payload = jsx:encode(Message),
-    ok = nats:pub(Conn, Topic, #{payload => Payload}).
+%    Conn = #state.conn,
+%    Payload = jsx:encode(Message),
+    ok = nats:pub(#state.conn, Topic, emqx_json:encode(Message)).
 
 format_payload(Message, Action) ->
     <<T1:64, T2:48, T3:16>> = Message#message.id,

@@ -146,7 +146,7 @@ teacup_init(_Env) ->
     {ok, Conn}.
 
 publish_to_nats(Message, Topic) ->
-    Conn = #state.conn,
+    Conn = S#state.conn,
     io:format("Conn: ~p~n", [Conn]),
     Payload = emqx_json:encode(Message),
     io:format("Payload: ~p~n", [Payload]),

@@ -45,7 +45,6 @@
 %% Called when the plugin application start
 load(Env) ->
     teacup_init(Env),
-    io:format("Conn: ~p~n", [#state.conn]),
     emqx:hook('client.connected',    {?MODULE, on_client_connected, [Env]}),
     emqx:hook('client.disconnected', {?MODULE, on_client_disconnected, [Env]}),
     emqx:hook('session.subscribed',  {?MODULE, on_session_subscribed, [Env]}),

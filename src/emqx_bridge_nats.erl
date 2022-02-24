@@ -47,7 +47,6 @@ load(Env) ->
     {ok, Conn} = teacup_init(Env),
     ets:new(app_data, [named_table, protected, set, {keypos, 1}]),
     ets:insert(app_data, {nats_conn, Conn}),
-    io:format("Conn: ~p~n", [S#state.conn]),
     emqx:hook('client.connected',    {?MODULE, on_client_connected, [Env]}),
     emqx:hook('client.disconnected', {?MODULE, on_client_disconnected, [Env]}),
     emqx:hook('session.subscribed',  {?MODULE, on_session_subscribed, [Env]}),

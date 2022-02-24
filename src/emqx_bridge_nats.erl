@@ -141,7 +141,7 @@ teacup_init(_Env) ->
     ],
     {ok, Conn} = nats:connect(list_to_binary(proplists:get_value(address,  PoolOpts)), proplists:get_value(port,  PoolOpts)),
     io:format("Conn: ~p~n", [Conn]),
-    #state{conn=Conn}.
+    #state{conn=Conn},
     {ok, Conn}.
 
 publish_to_nats(Message, Topic) ->

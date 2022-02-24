@@ -61,14 +61,14 @@ load(Env) ->
 %%--------------------------------------------------------------------
 
 on_client_connected(ClientInfo = #{clientid := ClientId}, ConnInfo, _Env) ->
-    io:format("Client(~s) connected, ClientInfo:~n~p~n, ConnInfo:~n~p~n", [ClientId, ClientInfo, ConnInfo]),
+%    io:format("Client(~s) connected, ClientInfo:~n~p~n, ConnInfo:~n~p~n", [ClientId, ClientInfo, ConnInfo]),
     Event = [{action, <<"connected">>}, {clientId, ClientId}],
     PublishTopic = <<"iotpaas.devices.connected">>,
     publish_to_nats(Event, PublishTopic).
 
 
 on_client_disconnected(ClientInfo = #{clientid := ClientId}, ReasonCode, ConnInfo, _Env) ->
-    io:format("Client(~s) disconnected due to ~p, ClientInfo:~n~p~n, ConnInfo:~n~p~n", [ClientId, ReasonCode, ClientInfo, ConnInfo]),
+%    io:format("Client(~s) disconnected due to ~p, ClientInfo:~n~p~n, ConnInfo:~n~p~n", [ClientId, ReasonCode, ClientInfo, ConnInfo]),
     Event = [{action, <<"disconnected">>}, {clientId, ClientId}, {reasonCode, ReasonCode}],
     PublishTopic = <<"iotpaas.devices.disconnected">>,
     publish_to_nats(Event, PublishTopic).
@@ -78,13 +78,13 @@ on_client_disconnected(ClientInfo = #{clientid := ClientId}, ReasonCode, ConnInf
 %%--------------------------------------------------------------------
 
 on_session_subscribed(#{clientid := ClientId}, Topic, SubOpts, _Env) ->
-    io:format("Session(~s) subscribed ~s with subOpts: ~p~n", [ClientId, Topic, SubOpts]),
+%    io:format("Session(~s) subscribed ~s with subOpts: ~p~n", [ClientId, Topic, SubOpts]),
     Event = [{action, <<"subscribe">>}, {clientId, ClientId}, {topic, Topic}],
     PublishTopic = <<"iotpaas.devices.subscribed">>,
     publish_to_nats(Event, PublishTopic).
 
 on_session_unsubscribed(#{clientid := ClientId}, Topic, Opts, _Env) ->
-    io:format("Session(~s) unsubscribed ~s with opts: ~p~n", [ClientId, Topic, Opts]),
+%    io:format("Session(~s) unsubscribed ~s with opts: ~p~n", [ClientId, Topic, Opts]),
     Event = [{action, <<"unsubscribe">>}, {clientId, ClientId}, {topic, Topic}],
     PublishTopic = <<"iotpaas.devices.unsubscribed">>,
     publish_to_nats(Event, PublishTopic).
@@ -98,7 +98,7 @@ on_message_publish(Message = #message{topic = <<"$SYS/", _/binary>>}, _Env) ->
     {ok, Message};
 
 on_message_publish(Message, _Env) ->
-    io:format("Publish ~s~n", [emqx_message:format(Message)]),
+%    io:format("Publish ~s~n", [emqx_message:format(Message)]),
     {ok, Payload} = format_payload(Message, <<"message_publish">>),
     PublishTopic = <<"iotpaas.devices.message">>,
     publish_to_nats(Payload, PublishTopic),
@@ -107,45 +107,36 @@ on_message_publish(Message, _Env) ->
 on_message_dropped(#message{topic = <<"$SYS/", _/binary>>}, _By, _Reason, _Env) ->
     ok;
 on_message_dropped(Message, _By = #{node := Node}, Reason, _Env) ->
-    io:format("Message dropped by node ~s due to ~s: ~s~n", [Node, Reason, emqx_message:format(Message)]),
+%    io:format("Message dropped by node ~s due to ~s: ~s~n", [Node, Reason, emqx_message:format(Message)]),
     {ok, Payload} = format_payload(Message, <<"message_dropped">>),
     PublishTopic = <<"iotpaas.devices.dropped">>,
     publish_to_nats(Payload, PublishTopic).
 
 on_message_delivered(_ClientInfo = #{clientid := ClientId}, Message, _Env) ->
-    io:format("Message delivered to client(~s): ~s~n", [ClientId, emqx_message:format(Message)]),
+%    io:format("Message delivered to client(~s): ~s~n", [ClientId, emqx_message:format(Message)]),
     {ok, Payload} = format_payload(Message, <<"message_delivered">>),
     PublishTopic = <<"iotpaas.devices.delivered">>,
     publish_to_nats(Payload, PublishTopic),
     {ok, Message}.
 
 on_message_acked(_ClientInfo = #{clientid := ClientId}, Message, _Env) ->
-    io:format("Message acked by client(~s): ~s~n", [ClientId, emqx_message:format(Message)]),
+%    io:format("Message acked by client(~s): ~s~n", [ClientId, emqx_message:format(Message)]),
     {ok, Payload} = format_payload(Message, <<"message_acked">>),
     PublishTopic = <<"iotpaas.devices.acked">>,
     publish_to_nats(Payload, PublishTopic).
 
 
 teacup_init(_Env) ->
-    io:format("Init Connection~n"),
     {ok, _} = application:ensure_all_started(teacup_nats),
     NatsAddress = application:get_env(emqx_bridge_nats, address, "127.0.0.1"),
-    io:format("Init Connection: NatsAddress ~p~n", [NatsAddress]),
     NatsPort = application:get_env(emqx_bridge_nats, port, 4222),
-    io:format("Init Connection: NatsPort ~p~n", [NatsPort]),
-    PoolOpts = [{address, NatsAddress}
-               , {port, NatsPort}
-    ],
+    PoolOpts = [{address, NatsAddress}, {port, NatsPort}],
     {ok, Conn} = nats:connect(list_to_binary(proplists:get_value(address,  PoolOpts)), proplists:get_value(port,  PoolOpts)),
-    io:format("Conn: ~p~n", [Conn]),
     {ok, Conn}.
 
 publish_to_nats(Message, Topic) ->
     [{_, Conn}] = ets:lookup(app_data, nats_conn),
-    io:format("Conn: ~p~n", [Conn]),
-    Payload = emqx_json:encode(Message),
-    io:format("Payload: ~p~n", [Payload]),
-    nats:pub(Conn, Topic, #{payload => Payload}),
+    nats:pub(Conn, Topic, #{payload => emqx_json:encode(Message)}),
     ok.
 
 format_payload(Message, Action) ->

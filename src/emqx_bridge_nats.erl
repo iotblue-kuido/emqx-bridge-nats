@@ -64,14 +64,14 @@ on_client_connected(ClientInfo = #{clientid := ClientId}, ConnInfo, _Env) ->
     io:format("Client(~s) connected, ClientInfo:~n~p~n, ConnInfo:~n~p~n", [ClientId, ClientInfo, ConnInfo]),
     Event = [{action, <<"connected">>}, {clientId, ClientId}],
     PublishTopic = <<"iotpaas.devices.connected">>,
-    publish_to_nats(Event, Topic).
+    publish_to_nats(Event, PublishTopic).
 
 
 on_client_disconnected(ClientInfo = #{clientid := ClientId}, ReasonCode, ConnInfo, _Env) ->
     io:format("Client(~s) disconnected due to ~p, ClientInfo:~n~p~n, ConnInfo:~n~p~n", [ClientId, ReasonCode, ClientInfo, ConnInfo]),
     Event = [{action, <<"disconnected">>}, {clientId, ClientId}, {reasonCode, ReasonCode}],
     PublishTopic = <<"iotpaas.devices.disconnected">>,
-    publish_to_nats(Event, Topic).
+    publish_to_nats(Event, PublishTopic).
 
 %%--------------------------------------------------------------------
 %% Session Lifecircle Hooks

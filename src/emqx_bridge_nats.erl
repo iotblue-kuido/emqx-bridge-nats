@@ -44,8 +44,9 @@
 
 %% Called when the plugin application start
 load(Env) ->
-    teacup_init(Env),
-    io:format("Conn: ~p~n", [#state.conn]),
+    {ok, Conn} = teacup_init(Env),
+    S = #state{conn=Conn},
+    io:format("Conn: ~p~n", [S#state.conn]),
     emqx:hook('client.connected',    {?MODULE, on_client_connected, [Env]}),
     emqx:hook('client.disconnected', {?MODULE, on_client_disconnected, [Env]}),
     emqx:hook('session.subscribed',  {?MODULE, on_session_subscribed, [Env]}),
@@ -142,7 +143,6 @@ teacup_init(_Env) ->
     ],
     {ok, Conn} = nats:connect(list_to_binary(proplists:get_value(address,  PoolOpts)), proplists:get_value(port,  PoolOpts)),
     io:format("Conn: ~p~n", [Conn]),
-    #state{conn=Conn},
     {ok, Conn}.
 
 publish_to_nats(Message, Topic) ->

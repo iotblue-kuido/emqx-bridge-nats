@@ -40,12 +40,13 @@
         , on_message_dropped/4
         ]).
 
--record(state, {conn}).
+%-record(state, {conn}).
 
 %% Called when the plugin application start
 load(Env) ->
     {ok, Conn} = teacup_init(Env),
-    S = #state{conn=Conn},
+    ets:new(app_data, [named_table, protected, set, {keypos, 1}]),
+    ets:insert(app_data, {nats_conn, Conn}),
     io:format("Conn: ~p~n", [S#state.conn]),
     emqx:hook('client.connected',    {?MODULE, on_client_connected, [Env]}),
     emqx:hook('client.disconnected', {?MODULE, on_client_disconnected, [Env]}),
@@ -146,7 +147,7 @@ teacup_init(_Env) ->
     {ok, Conn}.
 
 publish_to_nats(Message, Topic) ->
-    Conn = S#state.conn,
+    [{_, Conn}] = ets:lookup(app_data, nats_conn),
     io:format("Conn: ~p~n", [Conn]),
     Payload = emqx_json:encode(Message),
     io:format("Payload: ~p~n", [Payload]),

@@ -48,7 +48,6 @@ load(Env) ->
     io:format("Conn: ~p~n", [#state.conn]),
     emqx:hook('client.connected',    {?MODULE, on_client_connected, [Env]}),
     emqx:hook('client.disconnected', {?MODULE, on_client_disconnected, [Env]}),
-%    emqx:hook('client.authenticate', {?MODULE, on_client_authenticate, [Env]}),
     emqx:hook('session.subscribed',  {?MODULE, on_session_subscribed, [Env]}),
     emqx:hook('session.unsubscribed',{?MODULE, on_session_unsubscribed, [Env]}),
     emqx:hook('message.publish',     {?MODULE, on_message_publish, [Env]}),
@@ -141,7 +140,7 @@ teacup_init(_Env) ->
     PoolOpts = [{address, NatsAddress}
                , {port, NatsPort}
     ],
-    io:format("Init Connection: NatsAddress ~p~n", [proplists:get_value(address,  PoolOpts))]),
+    io:format("Init Connection: NatsAddress ~p~n", [proplists:get_value(address,  PoolOpts)]),
     {ok, Conn} = nats:connect(list_to_binary(proplists:get_value(address,  PoolOpts)), proplists:get_value(port,  PoolOpts)),
     {ok, Conn}.
 

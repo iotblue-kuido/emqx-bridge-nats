@@ -143,13 +143,13 @@ teacup_init(_Env) ->
     {ok, Conn} = nats:connect(list_to_binary(proplists:get_value(address,  PoolOpts)), proplists:get_value(port,  PoolOpts)),
     {ok, #state{conn = Conn}}.
 
-publish_to_nats(Message, Topic ) ->
+publish_to_nats(Message, Topic) ->
     Conn = #state.conn,
     io:format("Conn: ~p~n", [Conn]),
     Payload = emqx_json:encode(Message),
     io:format("Payload: ~p~n", [Payload]),
     nats:pub(Conn, Topic, #{payload => Payload}),
-    ok.
+    {ok, Message}.
 
 format_payload(Message, Action) ->
     <<T1:64, T2:48, T3:16>> = Message#message.id,
@@ -162,7 +162,7 @@ format_payload(Message, Action) ->
         {payload, Message#message.payload},
         {time, erlang:system_time(Message#message.timestamp)}
     ],
-    {ok, Message}.
+    {ok, Payload}.
 
 %% Called when the plugin application stop
 unload() ->

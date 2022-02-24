@@ -44,9 +44,9 @@
 
 %% Called when the plugin application start
 load(Env) ->
-    {ok, Conn} = teacup_init(Env),
-    ets:new(app_data, [named_table, protected, set, {keypos, 1}]),
-    ets:insert(app_data, {nats_conn, Conn}),
+%    {ok, Conn} = teacup_init(Env),
+%    ets:new(app_data, [named_table, protected, set, {keypos, 1}]),
+%    ets:insert(app_data, {nats_conn, Conn}),
     emqx:hook('client.connected',    {?MODULE, on_client_connected, [Env]}),
     emqx:hook('client.disconnected', {?MODULE, on_client_disconnected, [Env]}),
     emqx:hook('session.subscribed',  {?MODULE, on_session_subscribed, [Env]}),
@@ -140,12 +140,16 @@ teacup_init(_Env) ->
     io:format("Conn: ~p~n", [Conn]),
     {ok, Conn}.
 
+%publish_to_nats(Message, Topic) ->
+%    [{_, Conn}] = ets:lookup(app_data, nats_conn),
+%    io:format("Conn: ~p~n", [Conn]),
+%    Payload = emqx_json:encode(Message),
+%    io:format("Payload: ~p~n", [Payload]),
+%    nats:pub(Conn, Topic, #{payload => Payload}),
+%    ok.
+
 publish_to_nats(Message, Topic) ->
-    [{_, Conn}] = ets:lookup(app_data, nats_conn),
-    io:format("Conn: ~p~n", [Conn]),
-    Payload = emqx_json:encode(Message),
-    io:format("Payload: ~p~n", [Payload]),
-    nats:pub(Conn, Topic, #{payload => Payload}),
+    emqx_bridge_nats_conn:publish(emqx_json:encode(Message), Topic),
     ok.
 
 format_payload(Message, Action) ->

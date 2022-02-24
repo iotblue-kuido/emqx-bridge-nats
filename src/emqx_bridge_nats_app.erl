@@ -28,7 +28,7 @@
 
 start(_StartType, _StartArgs) ->
     {ok, Sup} = emqx_bridge_nats_sup:start_link(),
-    emqx_bridge_nats:load(application:get_all_env()),
+    ok = emqx_bridge_nats:load([]),
     {ok, Sup}.
 
 stop(_State) ->

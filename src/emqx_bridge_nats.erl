@@ -140,10 +140,7 @@ teacup_init(_Env) ->
     PoolOpts = [{address, NatsAddress}
                , {port, NatsPort}
     ],
-    io:format("Init Connection: NatsAddress ~p~n", [proplists:get_value(address,  PoolOpts)]),
-    io:format("Init Connection: NatsAddress ~p~n", [proplists:get_value(port,  PoolOpts)]),
     {ok, Conn} = nats:connect(list_to_binary(proplists:get_value(address,  PoolOpts)), proplists:get_value(port,  PoolOpts)),
-    io:format("Init Connection: NatsAddress ~p~n", [Conn]),
     {ok, #state{conn = Conn}}.
 
 publish_to_nats(Message, Topic ) ->
@@ -151,8 +148,8 @@ publish_to_nats(Message, Topic ) ->
     io:format("Conn: ~p~n", [Conn]),
     Payload = emqx_json:encode(Message),
     io:format("Payload: ~p~n", [Payload]),
-    ok = nats:pub(Conn, Topic, #{payload => Payload}),
-    {ok, Message}.
+    nats:pub(Conn, Topic, #{payload => Payload}),
+    {reply, ok, State}.
 
 format_payload(Message, Action) ->
     <<T1:64, T2:48, T3:16>> = Message#message.id,

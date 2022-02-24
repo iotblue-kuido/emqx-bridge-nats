@@ -149,7 +149,7 @@ publish_to_nats(Message, Topic) ->
     Payload = emqx_json:encode(Message),
     io:format("Payload: ~p~n", [Payload]),
     nats:pub(Conn, Topic, #{payload => Payload}),
-    {ok, Message}.
+    ok.
 
 format_payload(Message, Action) ->
     <<T1:64, T2:48, T3:16>> = Message#message.id,

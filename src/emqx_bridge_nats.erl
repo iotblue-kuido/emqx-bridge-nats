@@ -101,11 +101,15 @@ on_message_publish(Message = #message{topic = <<"$SYS/", _/binary>>}, _Env) ->
 
 on_message_publish(Message = #message{topic = <<"/bootstrapping", _/binary>>}, _Env) ->
     io:format("Publish ~s~n", [emqx_message:format(Message)]),
-    io:format("Username ~s~n", [maybe(emqx_message:get_header(username, Message))]),
+    io:format("Username ~s~n", [emqx_message:get_header(username, Message)]),
+    {ok, Payload} = format_payload(Message, <<"message_bootstrap">>),
+    PublishTopic = <<"iotpaas.devices.bootstrap">>,
+    publish_to_nats(Payload, PublishTopic),
     {ok, Message};
 
 on_message_publish(Message, _Env) ->
-%    io:format("Publish ~s~n", [emqx_message:format(Message)]),
+    io:format("Publish ~s~n", [emqx_message:format(Message)]),
+    io:format("Username ~s~n", [emqx_message:get_header(username, Message)]),
     {ok, Payload} = format_payload(Message, <<"message_publish">>),
     PublishTopic = <<"iotpaas.devices.message">>,
     publish_to_nats(Payload, PublishTopic),

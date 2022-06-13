@@ -17,9 +17,9 @@
 -module(emqx_bridge_nats).
 
 -include("emqx.hrl").
+-include("types.hrl").
 -include("emqx_bridge_nats.hrl").
 
--type(maybe(T) :: T | undefined).
 
 -export([ load/1
         , unload/0

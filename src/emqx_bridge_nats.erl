@@ -97,6 +97,11 @@ on_session_unsubscribed(#{clientid := ClientId}, Topic, Opts, _Env) ->
 on_message_publish(Message = #message{topic = <<"$SYS/", _/binary>>}, _Env) ->
     {ok, Message};
 
+on_message_publish(Message = #message{topic = <<"/bootstrapping", _/binary>>}, , _Env) ->
+    io:format("Publish ~s~n", [emqx_message:format(Message)]),
+    io:format("Username ~s~n", [maybe(emqx_message:get_header(username, Message))]),
+    {ok, Message}.
+
 on_message_publish(Message, _Env) ->
 %    io:format("Publish ~s~n", [emqx_message:format(Message)]),
     {ok, Payload} = format_payload(Message, <<"message_publish">>),

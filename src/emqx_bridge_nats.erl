@@ -107,7 +107,7 @@ on_message_publish(Message, _Env) ->
     {ok, Payload} = format_payload(Message, <<"message_publish">>),
     PublishTopic = <<"iotpaas.devices.message">>,
     publish_to_nats(Payload, PublishTopic),
-    {ok, Message};
+    {ok, Message}.
 
 on_message_dropped(#message{topic = <<"$SYS/", _/binary>>}, _By, _Reason, _Env) ->
     ok;

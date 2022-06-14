@@ -152,13 +152,16 @@ publish_to_nats(Message, Topic) ->
 
 format_payload(Message, Action) ->
     <<T1:64, T2:48, T3:16>> = Message#message.id,
+    Username = emqx_message:get_header(username, Message)
     Payload = [
         {id, T1 + T2 + T3},
         {action, Action},
         {qos, Message#message.qos},
         {clientId, Message#message.from},
         {topic, Message#message.topic},
+        {username, Username},
         {payload, Message#message.payload},
+
         {time, erlang:system_time(Message#message.timestamp)}
     ],
     {ok, Payload}.

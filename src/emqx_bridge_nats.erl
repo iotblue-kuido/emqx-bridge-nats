@@ -85,7 +85,7 @@ on_client_authenticate(_ClientInfo = #{clientid := ClientId, username:= Username
     publish_to_nats(Event, PublishTopic),
     {ok, Result}.
 
-on_client_check_acl(_ClientInfo = #{clientid := ClientId}, Topic, PubSub, Result, _Env) ->
+on_client_check_acl(_ClientInfo = #{clientid := ClientId}, PubSub, Topic, Result, _Env) ->
 %%    io:format("Client(~s) check_acl, PubSub:~p, Topic:~p, Result:~p~n",
 %%        [ClientId, PubSub, Topic, Result]),
     Event = [{action, <<"authorize">>}, {clientId, ClientId}, {pubSub, PubSub}, {topic, Topic}, {result, Result}],

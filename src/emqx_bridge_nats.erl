@@ -28,6 +28,8 @@
 %% Client Lifecircle Hooks
 -export([on_client_connected/3
         , on_client_disconnected/4
+        , on_client_authenticate/3
+        , on_client_check_acl/5
         ]).
 
 %% Session Lifecircle Hooks
@@ -51,6 +53,8 @@ load(Env) ->
     ets:insert(app_data, {nats_conn, Conn}),
     emqx:hook('client.connected',    {?MODULE, on_client_connected, [Env]}),
     emqx:hook('client.disconnected', {?MODULE, on_client_disconnected, [Env]}),
+    emqx:hook('client.authenticate', {?MODULE, on_client_authenticate, [Env]}),
+    emqx:hook('client.check_acl',    {?MODULE, on_client_check_acl, [Env]}),
     emqx:hook('session.subscribed',  {?MODULE, on_session_subscribed, [Env]}),
     emqx:hook('session.unsubscribed',{?MODULE, on_session_unsubscribed, [Env]}),
     emqx:hook('message.publish',     {?MODULE, on_message_publish, [Env]}),
@@ -68,12 +72,26 @@ on_client_connected(ClientInfo = #{clientid := ClientId}, ConnInfo, _Env) ->
     PublishTopic = <<"iotpaas.devices.connected">>,
     publish_to_nats(Event, PublishTopic).
 
-
 on_client_disconnected(ClientInfo = #{clientid := ClientId}, ReasonCode, ConnInfo, _Env) ->
 %    io:format("Client(~s) disconnected due to ~p, ClientInfo:~n~p~n, ConnInfo:~n~p~n", [ClientId, ReasonCode, ClientInfo, ConnInfo]),
     Event = [{action, <<"disconnected">>}, {clientId, ClientId}, {reasonCode, ReasonCode}],
     PublishTopic = <<"iotpaas.devices.disconnected">>,
     publish_to_nats(Event, PublishTopic).
+
+on_client_authenticate(_ClientInfo = #{clientid := ClientId}, Result, _Env) ->
+    io:format("Client(~s) authenticate, Result:~n~p~n", [ClientId, Result]),
+    Event = [{action, <<"authenticate">>}, {clientId, ClientId}, {result, Result}],
+    PublishTopic = <<"iotpaas.devices.authenticate">>,
+    publish_to_nats(Event, PublishTopic),
+    {ok, Result}.
+
+on_client_check_acl(_ClientInfo = #{clientid := ClientId}, Topic, PubSub, Result, _Env) ->
+    io:format("Client(~s) check_acl, PubSub:~p, Topic:~p, Result:~p~n",
+        [ClientId, PubSub, Topic, Result]),
+    Event = [{action, <<"authorize">>}, {clientId, ClientId}, {pubSub, PubSub}, {topic, Topic}, {result, Result}],
+    PublishTopic = <<"iotpaas.devices.authorize">>,
+    publish_to_nats(Event, PublishTopic)
+    {ok, Result}.
 
 %%--------------------------------------------------------------------
 %% Session Lifecircle Hooks
@@ -170,6 +188,8 @@ format_payload(Message, Action) ->
 unload() ->
     emqx:unhook('client.connected',    {?MODULE, on_client_connected}),
     emqx:unhook('client.disconnected', {?MODULE, on_client_disconnected}),
+    emqx:unhook('client.authenticate', {?MODULE, on_client_authenticate}),
+    emqx:unhook('client.check_acl',    {?MODULE, on_client_check_acl}),
     emqx:unhook('session.subscribed',  {?MODULE, on_session_subscribed}),
     emqx:unhook('session.unsubscribed',{?MODULE, on_session_unsubscribed}),
     emqx:unhook('message.publish',     {?MODULE, on_message_publish}),

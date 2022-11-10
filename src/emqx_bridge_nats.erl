@@ -78,9 +78,9 @@ on_client_disconnected(ClientInfo = #{clientid := ClientId}, ReasonCode, ConnInf
     PublishTopic = <<"iotpaas.devices.disconnected">>,
     publish_to_nats(Event, PublishTopic).
 
-on_client_authenticate(_ClientInfo = #{clientid := ClientId}, Result, _Env) ->
+on_client_authenticate(_ClientInfo = #{clientid := ClientId, username:= Username}, Result, _Env) ->
 %%    io:format("Client(~s) authenticate, Result:~n~p~n", [ClientId, Result]),
-    Event = [{action, <<"authenticate">>}, {clientId, ClientId}, {result, Result}],
+    Event = [{action, <<"authenticate">>}, {clientId, ClientId}, {username, Username}, {result, Result}],
     PublishTopic = <<"iotpaas.devices.authenticate">>,
     publish_to_nats(Event, PublishTopic),
     {ok, Result}.

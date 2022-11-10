@@ -90,7 +90,7 @@ on_client_check_acl(_ClientInfo = #{clientid := ClientId}, Topic, PubSub, Result
         [ClientId, PubSub, Topic, Result]),
     Event = [{action, <<"authorize">>}, {clientId, ClientId}, {pubSub, PubSub}, {topic, Topic}, {result, Result}],
     PublishTopic = <<"iotpaas.devices.authorize">>,
-    publish_to_nats(Event, PublishTopic)
+    publish_to_nats(Event, PublishTopic),
     {ok, Result}.
 
 %%--------------------------------------------------------------------

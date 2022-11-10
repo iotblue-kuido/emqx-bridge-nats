@@ -79,15 +79,15 @@ on_client_disconnected(ClientInfo = #{clientid := ClientId}, ReasonCode, ConnInf
     publish_to_nats(Event, PublishTopic).
 
 on_client_authenticate(_ClientInfo = #{clientid := ClientId}, Result, _Env) ->
-    io:format("Client(~s) authenticate, Result:~n~p~n", [ClientId, Result]),
+%%    io:format("Client(~s) authenticate, Result:~n~p~n", [ClientId, Result]),
     Event = [{action, <<"authenticate">>}, {clientId, ClientId}, {result, Result}],
     PublishTopic = <<"iotpaas.devices.authenticate">>,
     publish_to_nats(Event, PublishTopic),
     {ok, Result}.
 
 on_client_check_acl(_ClientInfo = #{clientid := ClientId}, Topic, PubSub, Result, _Env) ->
-    io:format("Client(~s) check_acl, PubSub:~p, Topic:~p, Result:~p~n",
-        [ClientId, PubSub, Topic, Result]),
+%%    io:format("Client(~s) check_acl, PubSub:~p, Topic:~p, Result:~p~n",
+%%        [ClientId, PubSub, Topic, Result]),
     Event = [{action, <<"authorize">>}, {clientId, ClientId}, {pubSub, PubSub}, {topic, Topic}, {result, Result}],
     PublishTopic = <<"iotpaas.devices.authorize">>,
     publish_to_nats(Event, PublishTopic),
@@ -118,16 +118,16 @@ on_message_publish(Message = #message{topic = <<"$SYS/", _/binary>>}, _Env) ->
     {ok, Message};
 
 on_message_publish(Message = #message{topic = <<"/bootstrapping", _/binary>>}, _Env) ->
-    io:format("Publish ~s~n", [emqx_message:format(Message)]),
-    io:format("Username ~s~n", [emqx_message:get_header(username, Message)]),
+%%    io:format("Publish ~s~n", [emqx_message:format(Message)]),
+%%    io:format("Username ~s~n", [emqx_message:get_header(username, Message)]),
     {ok, Payload} = format_payload(Message, <<"message_bootstrap">>),
     PublishTopic = <<"iotpaas.devices.bootstrap">>,
     publish_to_nats(Payload, PublishTopic),
     {ok, Message};
 
 on_message_publish(Message, _Env) ->
-    io:format("Publish ~s~n", [emqx_message:format(Message)]),
-    io:format("Username ~s~n", [emqx_message:get_header(username, Message)]),
+%%    io:format("Publish ~s~n", [emqx_message:format(Message)]),
+%%    io:format("Username ~s~n", [emqx_message:get_header(username, Message)]),
     {ok, Payload} = format_payload(Message, <<"message_publish">>),
     PublishTopic = <<"iotpaas.devices.message">>,
     publish_to_nats(Payload, PublishTopic),

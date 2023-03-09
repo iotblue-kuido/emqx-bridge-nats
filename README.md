@@ -1,4 +1,6 @@
 # emqx_bridge_nats: Plugin for Nats
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fiotblue-kuido%2Femqx-bridge-nats.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fiotblue-kuido%2Femqx-bridge-nats?ref=badge_shield)
+
 
 ## Introduction
 This plugin is to bridge data to NATS message bus.
@@ -71,3 +73,6 @@ disconnect: {"action":"disconnected","clientid":"mqttjs_661dd06d29","reasonCode"
 connect: {"action":"connected","clientid":"mqttjs_661dd06d29"}
 message: {"id":1902572155295492,"qos":0,"clientid":"mqttjs_661dd06d29","topic":"testtopic","payload":"{ \"msg\": \"Hello, World!\" }"}
 ```
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fiotblue-kuido%2Femqx-bridge-nats.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fiotblue-kuido%2Femqx-bridge-nats?ref=badge_large)
